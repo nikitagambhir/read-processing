@@ -1,10 +1,12 @@
 .PHONY: all 
 
 
-TMP      := \$$TMPDIR
-ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria)
+TMP      := \$$TMPDIR # $TMPDIR is only valid on running jobs
+ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 RUNFILES := $(ROOT_DIR)/runfiles
 FASTA    := mitochondira_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
+
+# Step 1: create the index for the mitochondrial genome
 index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
 	# Make output directory
 	mkdir index
