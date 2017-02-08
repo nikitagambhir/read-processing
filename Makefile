@@ -1,10 +1,12 @@
-.PHONY: all 
+.PHONY: all help
 
 
 TMP      := \$$TMPDIR # $TMPDIR is only valid on running jobs
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 RUNFILES := $(ROOT_DIR)/runfiles
 FASTA    := mitochondira_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
+PREFIX   := sclerotinia_sclerotiorum_mitochondria_2_contigs
+READS    := $(shell ls -d reads/*_1.fq.gz)
 
 # Step 1: create the index for the mitochondrial genome
 index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
@@ -19,3 +21,8 @@ index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta
 	$(ROOT_DIR)/index/$(<F)" > $(RUNFILES)/make-index.txt
 	# Run command with SLURM_Array
 	SLURM_Array -c $(RUNFILES)/make-index.txt --mail  $$EMAIL-r runs/BOWTIE2-BUILD -l bowtie/2.2 -w $(ROOT_DIR)
+
+help: $(READS)
+	@echo bowtie2 -x $(PREFIX) \
+	-1 $^ \ 
+	-2 $(patsubst, %_1.fq.gz, %_2.fq.gz, $^)
