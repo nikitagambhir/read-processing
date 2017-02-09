@@ -1,18 +1,17 @@
-.PHONY: all help index
+.PHONY: all align index help fasta
 
 
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 ROOT_DIR := $(strip $(ROOT_DIR))
 RUNFILES := $(ROOT_DIR)/runfiles
-FASTA    := mitochondira_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
+FASTA    := mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
 PREFIX   := Ssc_mito 
 READS    := $(shell ls -d reads/*_1.fq.gz)
-index    := $(addprefix index/$(PREFIX), .1.bz2 .2.bz2 .3.bz2 .4.bz2 .rev.1.bz2 .rev.2.bz2)
-
+IDX      := $(addprefix $(strip index/$(PREFIX)), .1.bz2 .2.bz2 .3.bz2 .4.bz2 .rev.1.bz2 .rev.2.bz2)
 
 # Step 1: create the index for the mitochondrial genome
 
-index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
+runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : $(FASTA)
 	# Make output directory
 ifeq (wildcard index/.),)
 	mkdir index
@@ -30,5 +29,9 @@ endif
 runfiles/make-alignment.txt: $(READS) $(ROOT_DIR)
 	printf " $(addsuffix \\n, $(addprefix $(ROOT_DIR)/, $(READS)))" > runfiles/make-alignment.txt
 
-help: runfiles/make-alignment.txt
-	
+$(IDX) : runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
+
+align: runfiles/make-alignment.txt
+index: $(IDX)	
+help:
+	@echo $(IDX)
