@@ -47,8 +47,8 @@ for s in $SAMPLES; do
 	BASE=$(basename $s)
 	
 	# Setup read group information for GATK
-	RGID="${INFO[2]}.${INFO[3]}"
-	RG="--rg SM:$BASE PL:ILLUMINA LB:RUN.${INFO[1]}"
+	RGID="--rg-id ${INFO[2]}.${INFO[3]}"
+	RG="--rg SM:$BASE --rg PL:ILLUMINA --rg LB:RUN.${INFO[1]}"
 
-	printf "$MKFIFO; $WFIFO $CMD$BASE $ARGS $RGID $RG\n" >> runfiles/make-alignment.txt
+	printf "$MKFIFO; $WFIFO $CMD$BASE.sam $ARGS $RGID $RG\n" >> runfiles/make-alignment.txt
 done
