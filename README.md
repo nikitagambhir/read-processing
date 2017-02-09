@@ -28,7 +28,7 @@ Required directories
  Generated directories
  ---------------------
  
-  - scripts/: shell scripts for pre-processing submission scripts (kept in this directory for posterity)
-  - *index/*: genome index files generated via `make index` 
-  - *mapped/*: mapped sam files generated via `make map`
-  - *runs/*: std out and std err of runs
+ - scripts/: shell scripts for pre-processing submission scripts (kept in this directory for posterity)
+ - *index/*: genome index files generated via `make index` 
+ - *mapped/*: mapped sam files generated via `make map`
+ - *runs/*: std out and std err of runs
