@@ -19,13 +19,12 @@ fi
 
 INPUT_REF=$1
 INDEX_PREFIX=$2
-CMD="bowtie2-build --seed 0 --threads 4"
+CMD="bowtie2-build --seed 99"
 
 
 if [[ $INPUT_REF == *gz ]]; then
-	MKFIFO="mkfifo $INPUT_REF.fifo"
-	WRITE_FIFO="zcat $INPUT_REF > $INPUT_REF.fifo"
-	CMD="$MKFIFO; $WRITE_FIFO & $CMD -c $INPUT_REF.fifo $INDEX_PREFIX; rm $INPUT_REF.fifo"
+	WRITE_TMP="zcat $INPUT_REF > \$TMPDIR/tmp.fa"
+	CMD="$WRITE_TMP; $CMD \$TMPDIR/tmp.fa $INDEX_PREFIX"
 else 
 	CMD="$CMD $INPUT_REF $INDEX_PREFIX"
 fi
