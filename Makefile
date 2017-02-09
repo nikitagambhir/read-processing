@@ -24,7 +24,8 @@ index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta
 	# Run command with SLURM_Array
 	SLURM_Array -c $(RUNFILES)/make-index.txt --mail  $$EMAIL-r runs/BOWTIE2-BUILD -l bowtie/2.2 -w $(ROOT_DIR)
 
-help: $(READS) $(ROOT_DIR)
-	printf "" > runfiles/make-alignment.txt
-	printf " $(addsuffix \\n, $(addprefix $(ROOT_DIR)/, $(READS)))" >> runfiles/make-alignment.txt
-	head runfiles/make-alignment.txt
+runfiles/make-alignment.txt: $(READS) $(ROOT_DIR)
+	printf " $(addsuffix \\n, $(addprefix $(ROOT_DIR)/, $(READS)))" > runfiles/make-alignment.txt
+
+help: runfiles/make-alignment.txt
+	
