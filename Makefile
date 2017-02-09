@@ -29,7 +29,7 @@ all: index map
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 ROOT_DIR := $(strip $(ROOT_DIR))
 RUNFILES := $(ROOT_DIR)/runfiles
-FASTA    := $(addprefix $(ROOT_DIR)/, mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz)
+FASTA    := $(addprefix $(ROOT_DIR)/, mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz)
 PREFIX   := Ssc_mito 
 READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
@@ -55,7 +55,7 @@ runfiles/make-index.txt : scripts/make-index.sh $(FASTA)
 ifeq ($(wildcard index/.),)
 	mkdir index
 endif
-	bash $^ $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) 
+	$^ $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) 
 #
 # submit job
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : runfiles/make-index.txt
