@@ -1,15 +1,18 @@
-.PHONY: all align index help 
+.PHONY: all index help map
 
+all: index map
 
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 ROOT_DIR := $(strip $(ROOT_DIR))
 RUNFILES := $(ROOT_DIR)/runfiles
 FASTA    := $(addprefix $(ROOT_DIR)/, mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz)
 PREFIX   := Ssc_mito 
-READS    := $(shell ls -d reads/*_1.fq.gz)
+READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
+RFILES   := $(addsuffix _1.fq.gz, $(READS))
 IDX      := $(addprefix $(strip index/$(PREFIX)), .1.bz2 .2.bz2 .3.bz2 .4.bz2 .rev.1.bz2 .rev.2.bz2)
+MAPPED   := $(ROOT_DIR)/mapped
+SAM      := $(addprefix $(MAPPED)/, $(READS))
 
-align: runfiles/make-alignment.txt
 
 # INDEX CREATION
 # ==============
@@ -25,7 +28,7 @@ align: runfiles/make-alignment.txt
 #
 # Create run script
 runfiles/make-index.txt : scripts/make-index.sh $(FASTA)
-ifeq (wildcard index/.),)
+ifeq ($(wildcard index/.),)
 	mkdir index
 endif
 	bash $^ $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) 
@@ -45,11 +48,22 @@ $(IDX) : runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
 index : $(IDX)
 #
 # -----------------------------------------------------------------------------
-runfiles/make-alignment.txt: $(READS) $(ROOT_DIR)
-	printf " $(addsuffix \\n, $(addprefix $(ROOT_DIR)/, $(READS)))" > runfiles/make-alignment.txt
+runfiles/make-alignment.txt : scripts/make-alignment.sh $(RFILES) $(ROOT_DIR)
+	$< $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) $(MAPPED) $(addprefix $(ROOT_DIR)/, $(READS))
 
+runs/MAP-READS/MAP-READS.sh : runfiles/make-alignment.txt index
+ifeq ($(wildcard $(MAPPED)/.),)
+	mkdir $(MAPPED)
+endif
+	SLURM_Array -c $< \
+	--mail  $$EMAIL\
+	-r runs/MAP-READS \
+	-l bowtie/2.2 \
+	-w $(ROOT_DIR)
 
+$(SAM): runs/MAP-READS/MAP-READS.sh
 
+map: $(SAM)
 
 help:
 	@echo $(IDX)
