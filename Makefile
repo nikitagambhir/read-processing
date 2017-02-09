@@ -7,8 +7,9 @@ RUNFILES := $(ROOT_DIR)/runfiles
 FASTA    := mitochondira_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
 PREFIX   := sclerotinia_sclerotiorum_mitochondria_2_contigs
 READS    := $(shell ls -d reads/*_1.fq.gz)
-
+#READS    := $(abspath $(READS))
 # Step 1: create the index for the mitochondrial genome
+
 index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
 	# Make output directory
 	mkdir index
@@ -22,7 +23,5 @@ index: mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta
 	# Run command with SLURM_Array
 	SLURM_Array -c $(RUNFILES)/make-index.txt --mail  $$EMAIL-r runs/BOWTIE2-BUILD -l bowtie/2.2 -w $(ROOT_DIR)
 
-help: $(READS)
-	@echo bowtie2 -x $(PREFIX) \
-	-1 $^ \ 
-	-2 $(patsubst, %_1.fq.gz, %_2.fq.gz, $^)
+help: $(READS) $(ROOT_DIR)
+	@echo "READS: "$(addprefix $(ROOT_DIR)/, $(READS))
