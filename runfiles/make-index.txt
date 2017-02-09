@@ -1,1 +1,1 @@
-zcat mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz > $TMPDIR/tmp.fna; bowtie2-build --seed 20170207 --threads 4 $TMPDIR/tmp.fna /work/everhartlab/kamvarz/Sclerotinia_mitochondria/index/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz
+zcat mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_contigs.fasta.gz > $TMPDIR/tmp.fna; bowtie2-build --seed 20170207 --threads 4 $TMPDIR/tmp.fna /work/everhartlab/kamvarz/Sclerotinia_mitochondria/index/Ssc_mito 
