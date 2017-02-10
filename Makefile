@@ -64,7 +64,7 @@ endif
 #
 # The important files should depend on the files that built it
 # (Index Files) -> (submit script) -> (generator script) + (FASTA files)
-$(IDX) : runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh scripts/make-index.sh $(FASTA)
+$(IDX) : scripts/make-index.sh $(FASTA) runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
 #
 # .PHONY target
 index : $(IDX) 
@@ -95,7 +95,7 @@ endif
 # SAM files need to depend on the index files
 # (SAM files) -> (Index files)
 # (SAM files) -> (submit script) -> (generator script) + (read files)
-$(SAM): $(IDX) runs/MAP-READS/MAP-READS.sh scripts/make-alignment.sh $(RFILES)
+$(SAM): $(IDX) scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
 # 
 # .PHONY target map
 map: $(SAM)
