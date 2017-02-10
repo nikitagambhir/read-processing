@@ -89,6 +89,7 @@ endif
 		--mail  $$EMAIL\
 		-r runs/MAP-READS \
 		-l bowtie/2.2 \
+		--hold \
 		-w $(ROOT_DIR)
 #
 # SAM files need to depend on the index files
