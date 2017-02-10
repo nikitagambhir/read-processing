@@ -22,7 +22,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.PHONY: all index help map
+.PHONY: all indexsubmit index help mapsubmit map
 
 all: index map
 
@@ -51,25 +51,21 @@ SAM      := $(addprefix $(MAPPED)/, $(READS))
 # -----------------------------------------------------------------------------
 #
 # Create run script
-runfiles/make-index.txt : scripts/make-index.sh $(FASTA)
+runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA)
 ifeq ($(wildcard index/.),)
 	mkdir index
 endif
 	$^ $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) 
-#
-# submit job
-runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : runfiles/make-index.txt
 	SLURM_Array -c $(RUNFILES)/make-index.txt \
-		--mail  $$EMAIL\
 		-r runs/BOWTIE2-BUILD \
 		-l bowtie/2.2 \
 		-w $(ROOT_DIR)
 #
 # Formatlity: submit job should create the proper output files.
-$(IDX) : runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
+$(IDX) : runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh scripts/make-index.sh $(FASTA)
 #
 # .PHONY target
-index : $(IDX)
+index : $(IDX) 
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
