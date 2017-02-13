@@ -79,7 +79,7 @@ index : $(FASTA) $(IDX)
 # -----------------------------------------------------------------------------
 #
 # Create run script
-runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) $(IDX)
+runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) $(IDX) 
 ifeq ($(wildcard $(MAPPED)/.),)
 	mkdir $(MAPPED)
 endif
@@ -95,12 +95,12 @@ endif
 # SAM files need to depend on the index files
 # (SAM files) -> (Index files)
 # (SAM files) -> (submit script) -> (generator script) + (read files)
-$(SAM): $(IDX) scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
+$(SAM) : $(IDX) scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
 # 
 # .PHONY target map
-map: $(IDX) $(SAM)
+map : $(IDX) $(SAM)
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-help:
+help :
 	@echo $(IDX)
 
