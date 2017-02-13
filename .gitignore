@@ -3,3 +3,4 @@ runs/*
 mitochondria_genome/*
 reads/*
 mapped/*
+bams/*
