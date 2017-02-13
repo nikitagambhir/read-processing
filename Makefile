@@ -24,7 +24,7 @@
 
 .PHONY: all index help map clean
 
-all: index ma
+all: index map
 
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 ROOT_DIR := $(strip $(ROOT_DIR))
@@ -39,6 +39,7 @@ SAM      := $(patsubst reads/%.sam, $(MAPPED)/%.sam, $(addsuffix .sam, $(READS))
 SAM_VAL  := $(patsubst %.sam, %_stats.txt.gz, $(SAM))
 BAM      := $(patsubst mapped/%.sam, bams/%_nsort, $(SAM))
 FIXED    := $(patsubst %_nsort, %_fixed.bam, $(BAM))
+BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 
 # INDEX CREATION
 # ==============
@@ -102,9 +103,10 @@ $(SAM) : scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
 $(SAM_VAL): $(SAM) runs/VALIDATE-SAM/VALIDATE-SAM.sh
 $(BAM) : $(SAM) runs/SAM-TO-BAM/SAM-TO-BAM.sh
 $(FIXED) : $(BAM) runs/FIXMATE/FIXMATE.sh
+$(BAM_VAL) : $(FIXED) runs/VALIDATE-BAM/VALIDATE-BAM.sh
 # 
 # .PHONY target map
-map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED)
+map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL)
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -135,11 +137,21 @@ runs/FIXMATE/FIXMATE.sh: $(BAM)
 		-l samtools/1.3 \
 		--hold \
 		-w $(ROOT_DIR)
+
+runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED)
+	echo $^ | sed -r 's@([^ ]+?)_fixed.bam *@samtools stats \1_fixed.bam | gzip -c > \1_fixed_stats.txt.gz\n@g' > runfiles/validate-bam.txt
+	SLURM_Array -c runfiles/validate-bam.txt \
+		--mail  $$EMAIL\
+		-r runs/VALIDATE-BAM \
+		-l samtools/1.3 \
+		--hold \
+		-w $(ROOT_DIR)
+
 help :
 	@echo $(IDX)
 	@echo $(SAM)
 	@echo $(SAM_VAL)
 
 runclean.%:
-	$(RM) runs/$*
+	$(RM) -rfv runs/$*
 
