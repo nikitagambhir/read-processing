@@ -4,9 +4,10 @@ Alignment of Sclerotinia mitochondrial genomes
 This will contain the analysis of the mitochondrial genomes for our 
 *Sclerotinia* isolates. This is controlled via makefile.
 
-This is the current structure of the repository as of 2017-02-09 15:30 CST:
+This is the current structure of the repository as of 2017-02-13 15:36 CST
 
 ```
+|-- bams
 |-- index
 |-- mapped
 |-- mitochondria_genome
@@ -14,7 +15,11 @@ This is the current structure of the repository as of 2017-02-09 15:30 CST:
 |-- runfiles
 |-- runs
 |   |-- BOWTIE2-BUILD
-|   `-- MAP-READS
+|   |-- FIXMATE
+|   |-- MAP-READS
+|   |-- SAM-TO-BAM
+|   |-- VALIDATE-BAM
+|   `-- VALIDATE-SAM
 `-- scripts
 ```
 
