@@ -28,13 +28,13 @@ all: index map
 
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 ROOT_DIR := $(strip $(ROOT_DIR))
-RUNFILES := $(ROOT_DIR)/runfiles
-FASTA    := $(addprefix $(ROOT_DIR)/, mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz)
+RUNFILES := runfiles
+FASTA    := mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
 PREFIX   := Ssc_mito 
 READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
 IDX      := $(addprefix $(strip index/$(PREFIX)), .1.bz2 .2.bz2 .3.bz2 .4.bz2 .rev.1.bz2 .rev.2.bz2)
-MAPPED   := $(ROOT_DIR)/mapped
+MAPPED   := mapped
 SAM      := $(addprefix $(MAPPED)/, $(READS))
 
 
@@ -56,7 +56,7 @@ ifeq ($(wildcard index/.),)
 	mkdir index
 endif
 	# All of the dependencies are in the correct order here
-	$^ $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) 
+	$^ $(addprefix index/, $(PREFIX)) 
 	SLURM_Array -c $(RUNFILES)/make-index.txt \
 		-r runs/BOWTIE2-BUILD \
 		-l bowtie/2.2 \
@@ -84,7 +84,7 @@ ifeq ($(wildcard $(MAPPED)/.),)
 	mkdir $(MAPPED)
 endif
 	# The script input here is the only one that's in order
-	$< $(addprefix $(ROOT_DIR)/index/, $(PREFIX)) $(MAPPED) $(addprefix $(ROOT_DIR)/, $(READS))
+	$< $(addprefix index/, $(PREFIX)) $(MAPPED) $(READS)
 	SLURM_Array -c runfiles/make-alignment.txt \
 		--mail  $$EMAIL\
 		-r runs/MAP-READS \
