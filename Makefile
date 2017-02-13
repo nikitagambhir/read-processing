@@ -67,7 +67,7 @@ endif
 $(IDX) : scripts/make-index.sh $(FASTA) runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
 #
 # .PHONY target
-index : $(IDX) 
+index : $(FASTA) $(IDX) 
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -98,7 +98,7 @@ endif
 $(SAM): $(IDX) scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
 # 
 # .PHONY target map
-map: $(SAM)
+map: $(IDX) $(SAM)
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 help:
