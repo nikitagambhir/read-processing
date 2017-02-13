@@ -35,8 +35,8 @@ READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
 IDX      := $(addprefix $(strip index/$(PREFIX)), .1.bz2 .2.bz2 .3.bz2 .4.bz2 .rev.1.bz2 .rev.2.bz2)
 MAPPED   := mapped
-SAM      := $(addprefix $(MAPPED)/, $(READS))
-
+SAM      := $(patsubst reads/%.sam, $(MAPPED)/%.sam, $(addsuffix .sam, $(READS)))
+SAM_VAL  := $(patsubst %.sam, %_stats.txt.gz, $(SAM))
 
 # INDEX CREATION
 # ==============
@@ -79,7 +79,7 @@ index : $(FASTA) $(IDX)
 # -----------------------------------------------------------------------------
 #
 # Create run script
-runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) $(IDX) 
+runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) 
 ifeq ($(wildcard $(MAPPED)/.),)
 	mkdir $(MAPPED)
 endif
@@ -95,12 +95,26 @@ endif
 # SAM files need to depend on the index files
 # (SAM files) -> (Index files)
 # (SAM files) -> (submit script) -> (generator script) + (read files)
-$(SAM) : $(IDX) scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
+$(SAM) : scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
+$(SAM_VAL): $(SAM) runs/VALIDATE-SAM/VALIDATE-SAM.sh
 # 
 # .PHONY target map
-map : $(IDX) $(SAM)
+map : $(IDX) $(SAM) $(SAM_VAL)
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM)
+	echo $^ | sed -r 's/([^ ]+?).sam /samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n/g' > runfiles/validate-sam.txt
+	SLURM_Array -c runfiles/validate-sam.txt \
+		--mail  $$EMAIL\
+		-r runs/VALIDATE-SAM \
+		-l samtools/1.3 \
+		--hold \
+		-w $(ROOT_DIR)
+
+
 help :
 	@echo $(IDX)
+	@echo $(SAM)
+	@echo $(SAM_VAL)
 
