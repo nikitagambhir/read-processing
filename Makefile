@@ -37,6 +37,8 @@ IDX      := $(addprefix $(strip index/$(PREFIX)), .1.bz2 .2.bz2 .3.bz2 .4.bz2 .r
 MAPPED   := mapped
 SAM      := $(patsubst reads/%.sam, $(MAPPED)/%.sam, $(addsuffix .sam, $(READS)))
 SAM_VAL  := $(patsubst %.sam, %_stats.txt.gz, $(SAM))
+BAM      := $(patsubst mapped/%.sam, bams/%_nsort, $(SAM))
+FIXED    := $(patsubst %_nsort, %_fixed.bam, $(BAM))
 
 # INDEX CREATION
 # ==============
@@ -82,6 +84,7 @@ index : $(FASTA) $(IDX)
 runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) 
 ifeq ($(wildcard $(MAPPED)/.),)
 	mkdir $(MAPPED)
+	mkdir bams
 endif
 	# The script input here is the only one that's in order
 	$< $(addprefix index/, $(PREFIX)) $(MAPPED) $(READS)
@@ -97,9 +100,11 @@ endif
 # (SAM files) -> (submit script) -> (generator script) + (read files)
 $(SAM) : scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
 $(SAM_VAL): $(SAM) runs/VALIDATE-SAM/VALIDATE-SAM.sh
+$(BAM) : $(SAM) runs/SAM-TO-BAM/SAM-TO-BAM.sh
+$(FIXED) : $(BAM) runs/FIXMATE/FIXMATE.sh
 # 
 # .PHONY target map
-map : $(IDX) $(SAM) $(SAM_VAL)
+map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED)
 #
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -112,7 +117,24 @@ runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM)
 		--hold \
 		-w $(ROOT_DIR)
 
+runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM)
+	echo $^ | sed -r 's/mapped([^ ]+?).sam */samtools view -bSu mapped\1.sam | samtools sort -n -O bam -o bams\1_nsort -T bams\1_nsort_tmp\n/g' > runfiles/sam-to-bam.txt
+	SLURM_Array -c runfiles/sam-to-bam.txt \
+		--mail  $$EMAIL\
+		-r runs/SAM-TO-BAM \
+		-l samtools/1.3 \
+		--hold \
+		-w $(ROOT_DIR)
+# $SAMT fixmate -O bam bams/${arr[0]}_nsort /dev/stdout | $SAMT sort -O bam -o - -T bams/${arr[0]}_csort_tmp | $SAMT calmd -b - $REF > bams/${arr[0]}_fixed.bam
 
+runs/FIXMATE/FIXMATE.sh: $(BAM)
+	echo $^ | sed -r 's@([^ ]+?)_nsort *@samtools fixmate -O bam \1_nsort \/dev\/stdout | samtools sort -O bam -o - -T \1_csort_tmp | samtools calmd -b - $(FASTA) > \1_fixed.bam\n@g' > runfiles/fixmate.txt
+	SLURM_Array -c runfiles/fixmate.txt \
+		--mail  $$EMAIL\
+		-r runs/FIXMATE \
+		-l samtools/1.3 \
+		--hold \
+		-w $(ROOT_DIR)
 help :
 	@echo $(IDX)
 	@echo $(SAM)
