@@ -22,9 +22,9 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.PHONY: all index help map
+.PHONY: all index help map clean
 
-all: index map
+all: index ma
 
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) # cannot do $(shell pwd) since it executes on a different machine
 ROOT_DIR := $(strip $(ROOT_DIR))
@@ -128,7 +128,7 @@ runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM)
 # $SAMT fixmate -O bam bams/${arr[0]}_nsort /dev/stdout | $SAMT sort -O bam -o - -T bams/${arr[0]}_csort_tmp | $SAMT calmd -b - $REF > bams/${arr[0]}_fixed.bam
 
 runs/FIXMATE/FIXMATE.sh: $(BAM)
-	echo $^ | sed -r 's@([^ ]+?)_nsort *@samtools fixmate -O bam \1_nsort \/dev\/stdout | samtools sort -O bam -o - -T \1_csort_tmp | samtools calmd -b - $(FASTA) > \1_fixed.bam\n@g' > runfiles/fixmate.txt
+	echo $^ | sed -r 's@([^ ]+?)_nsort *@zcat $(FASTA) > $$TMPDIR/r.fa; samtools fixmate -O bam \1_nsort \/dev\/stdout | samtools sort -O bam -o - -T \1_csort_tmp | samtools calmd -b - $$TMPDIR/r.fa > \1_fixed.bam\n@g' > runfiles/fixmate.txt
 	SLURM_Array -c runfiles/fixmate.txt \
 		--mail  $$EMAIL\
 		-r runs/FIXMATE \
@@ -139,4 +139,7 @@ help :
 	@echo $(IDX)
 	@echo $(SAM)
 	@echo $(SAM_VAL)
+
+runclean.%:
+	$(RM) runs/$*
 
