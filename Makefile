@@ -74,7 +74,7 @@ $(BAM_VAL) : $(FIXED) runs/VALIDATE-BAM/VALIDATE-BAM.sh
 
 map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL)
 
-runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) 
+runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) | $(SAM_DIR) 
 	echo $^ | \
 	sed -r 's/'\
 	'($(SAM_DIR)[^ ]+?).sam *'\
@@ -103,7 +103,7 @@ runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM) | $(BAM_DIR)
 		--hold \
 		-w $(ROOT_DIR)
 
-runs/FIXMATE/FIXMATE.sh: $(BAM)
+runs/FIXMATE/FIXMATE.sh: $(BAM) | $(BAM_DIR)
 	echo $^ | \
 	sed -r 's@'\
 	'([^ ]+?)_nsort *'\
@@ -120,7 +120,7 @@ runs/FIXMATE/FIXMATE.sh: $(BAM)
 		--hold \
 		-w $(ROOT_DIR)
 
-runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED)
+runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED) | $(BAM_DIR)
 	echo $^ | \
 	sed -r 's@'\
 	'([^ ]+?)_fixed.bam *'\
