@@ -26,6 +26,9 @@
 
 all: index map
 
+index : $(FASTA) $(IDX) 
+map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
+
 EMAIL    := ***REMOVED***
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) 
 ROOT_DIR := $(strip $(ROOT_DIR))
@@ -33,6 +36,8 @@ TMP      := \$$TMPDIR
 IDX_DIR  := bt2-index
 BOWTIE   := bowtie/2.2
 SAMTOOLS := samtools/1.3
+PICARD   := picard/1.1
+PIC      := \$$PICARD
 SAM_DIR  := SAMS
 BAM_DIR  := BAMS
 RUNFILES := runfiles
@@ -45,6 +50,8 @@ SAM      := $(patsubst reads/%.sam, $(SAM_DIR)/%.sam, $(addsuffix .sam, $(READS)
 SAM_VAL  := $(patsubst %.sam, %_stats.txt.gz, $(SAM))
 BAM      := $(patsubst $(SAM_DIR)/%.sam, $(BAM_DIR)/%_nsort, $(SAM))
 FIXED    := $(patsubst %_nsort, %_fixed.bam, $(BAM))
+DUPMRK   := $(patsubst %_nsort, %_dupmrk.bam, $(BAM))
+DUP_VAL  := $(patsubst %_nsort, %_dupmrk_stats.txt.gz, $(BAM))
 BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR):
@@ -58,7 +65,6 @@ runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR
 		-w $(ROOT_DIR)
 
 $(IDX) : scripts/make-index.sh $(FASTA) runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
-index : $(FASTA) $(IDX) 
 
 runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) | $(SAM_DIR) 
 	$< $(addprefix $(IDX_DIR)/, $(PREFIX)) $(SAM_DIR) $(READS)
@@ -70,12 +76,7 @@ runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) | $(SAM_DIR)
 		-w $(ROOT_DIR)
 
 $(SAM) : scripts/make-alignment.sh $(RFILES) runs/MAP-READS/MAP-READS.sh
-$(SAM_VAL): $(SAM) runs/VALIDATE-SAM/VALIDATE-SAM.sh
-$(BAM) : $(SAM) runs/SAM-TO-BAM/SAM-TO-BAM.sh
-$(FIXED) : $(BAM) runs/FIXMATE/FIXMATE.sh
-$(BAM_VAL) : $(FIXED) runs/VALIDATE-BAM/VALIDATE-BAM.sh
 
-map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL)
 
 runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) | $(SAM_DIR) 
 	echo $^ | \
@@ -90,6 +91,8 @@ runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) | $(SAM_DIR)
 		-l $(SAMTOOLS) \
 		--hold \
 		-w $(ROOT_DIR)
+
+$(SAM_VAL): $(SAM) runs/VALIDATE-SAM/VALIDATE-SAM.sh
 
 # SAMTOOLS SPECIFICATIONS
 #
@@ -122,6 +125,7 @@ runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM) | $(BAM_DIR)
 		--hold \
 		-w $(ROOT_DIR)
 
+$(BAM) : $(SAM) runs/SAM-TO-BAM/SAM-TO-BAM.sh
 # Fix mate information and add the MD tag.
 # # http://samtools.github.io/hts-specs/
 # # MD = String for mismatching positions
@@ -143,6 +147,8 @@ runs/FIXMATE/FIXMATE.sh: $(BAM) | $(BAM_DIR)
 		--hold \
 		-w $(ROOT_DIR)
 
+$(FIXED) : $(BAM) runs/FIXMATE/FIXMATE.sh
+
 runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED) | $(BAM_DIR)
 	echo $^ | \
 	sed -r 's@'\
@@ -158,6 +164,56 @@ runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED) | $(BAM_DIR)
 		--hold \
 		-w $(ROOT_DIR)
 
+$(BAM_VAL) : $(FIXED) runs/VALIDATE-BAM/VALIDATE-BAM.sh
+
+runs/MARK-DUPS/MARK-DUPS.sh: $(FIXED)
+	echo $^ | \
+	sed -r 's@'\
+	'([^ ]+?)_fixed.bam *'\
+	'@'\
+	'java -Djava.io.tmpdir=$(TMP) '\
+	'-jar $(PIC) MarkDuplicates '\
+	'I=\1_fixed.bam '\
+	'O=\1_dupmrk.bam '\
+	'MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 '\
+	'ASSUME_SORT_ORDER=coordinate '\
+	'M=\1_marked_dup_metrics.txt; '\
+	'samtools index \1_dupmrk.bam\n'\
+	'@g' > $(RUNFILES)/mark-dups.txt # end
+	SLURM_Array -c $(RUNFILES)/mark-dups.txt \
+		--mail $(EMAIL) \
+		-r runs/MARK-DUPS \
+		-l $(PICARD) $(SAMTOOLS)\
+		--hold \
+		-w $(ROOT_DIR)
+
+$(DUPMRK) : $(FIXED) runs/MARK-DUPS/MARK-DUPS.sh
+
+runs/VALIDATE-DUPS/VALIDATE-DUPS.sh: $(DUPMRK)
+	echo $^ | \
+	sed -r 's@'\
+	'([^ ]+?)_dupmrk.bam *'\
+	'@'\
+	'samtools stats \1_dupmrk.bam | '\
+	'gzip -c \1_dupmrk_stats.txt.gz'\
+	'@g' > $(RUNFILES)/validate-dups.txt # end
+	SLURM_Array -c $(RUNFILES)/validate-dups.txt \
+		--mail $(EMAIL) \
+		-r runs/VALDIATE-DUPS \
+		-l $(SAMTOOLS) \
+		--hold \
+		-w $(ROOT_DIR)	
+
+$(DUP_VAL): $(DUPMRK) runs/VALIDATE-DUPS/VALIDATE-DUPS.sh
+
+# 
+# CMD="$JAVA -Djava.io.tmpdir=/data/ \
+#      -jar $PIC MarkDuplicates \
+#           I=bams/${arr[0]}_fixed.bam \
+#                O=bams/${arr[0]}_dupmrk.bam \
+#                     MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \
+#                          ASSUME_SORT_ORDER=coordinate \
+#                               M=bams/${arr[0]}_marked_dup_metrics.txt"
 help :
 	@echo
 	@echo "COMMANDS"
