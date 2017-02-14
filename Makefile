@@ -304,8 +304,9 @@ runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 $(GVCF): $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
 
 runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
-	printf "java -Djava.io.tmpdir=$(TMP) "\
+	printf "java -Xmx36g -Djava.io.tmpdir=$(TMP) "\
 	"-jar $(gatk) "\
+	"-nt 6 "\
 	"-T GenotypeGVCFs "\
 	"-R $(ROOT_DIR)/$(REF_IDX) "\
 	"$(addprefix -V , $^) "\
@@ -316,7 +317,9 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 		-r runs/MAKE-VCF \
 		-l $(GATK) \
 		--hold \
-		-m 25g \
+		-m 36g \
+		-t 24:00:00 \
+		-P 6 \
 		-w $(ROOT_DIR)
 
 
