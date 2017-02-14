@@ -77,10 +77,11 @@ map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL)
 
 runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM)
 	echo $^ | \
-	sed -r \
-	's/([^ ]+?).sam */'\
-	'samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n/g' \
-	> runfiles/validate-sam.txt
+	sed -r 's/'\
+	'([^ ]+?).sam *'\
+	'/'\
+	'samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n'\
+	'/g' > runfiles/validate-sam.txt # end
 	SLURM_Array -c runfiles/validate-sam.txt \
 		--mail  $$EMAIL\
 		-r runs/VALIDATE-SAM \
@@ -90,8 +91,12 @@ runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM)
 
 runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM)
 	echo $^ | \
-	sed -r 's/mapped([^ ]+?).sam */samtools view -bSu mapped\1.sam | samtools sort -n -O bam -o bams\1_nsort -T bams\1_nsort_tmp\n/g' \
-	> runfiles/sam-to-bam.txt
+	sed -r 's/'\
+	'$(MAPPED)([^ ]+?).sam *'\
+	'/'\
+	'samtools view -bSu $(MAPPED)\1.sam | '\
+	'samtools sort -n -O bam -o bams\1_nsort -T bams\1_nsort_tmp\n'\
+	'/g' > runfiles/sam-to-bam.txt # end
 	SLURM_Array -c runfiles/sam-to-bam.txt \
 		--mail  $$EMAIL\
 		-r runs/SAM-TO-BAM \
@@ -101,8 +106,14 @@ runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM)
 
 runs/FIXMATE/FIXMATE.sh: $(BAM)
 	echo $^ | \
-	sed -r 's@([^ ]+?)_nsort *@zcat $(FASTA) > $$TMPDIR/r.fa; samtools fixmate -O bam \1_nsort /dev/stdout | samtools sort -O bam -o - -T \1_csort_tmp | samtools calmd -b - $$TMPDIR/r.fa > \1_fixed.bam\n@g' \
-	> runfiles/fixmate.txt
+	sed -r 's@'\
+	'([^ ]+?)_nsort *'\
+	'@'\
+	'zcat $(FASTA) > $$TMPDIR/r.fa; '\
+	'samtools fixmate -O bam \1_nsort /dev/stdout | '\
+	'samtools sort -O bam -o - -T \1_csort_tmp | '\
+	'samtools calmd -b - $$TMPDIR/r.fa > \1_fixed.bam\n'\
+	'@g' > runfiles/fixmate.txt # end
 	SLURM_Array -c runfiles/fixmate.txt \
 		--mail  $$EMAIL\
 		-r runs/FIXMATE \
@@ -111,7 +122,13 @@ runs/FIXMATE/FIXMATE.sh: $(BAM)
 		-w $(ROOT_DIR)
 
 runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED)
-	echo $^ | sed -r 's@([^ ]+?)_fixed.bam *@samtools stats \1_fixed.bam | gzip -c > \1_fixed_stats.txt.gz\n@g' > runfiles/validate-bam.txt
+	echo $^ | \
+	sed -r 's@'\
+	'([^ ]+?)_fixed.bam *'\
+	'@'\
+	'samtools stats \1_fixed.bam | '\
+	'gzip -c > \1_fixed_stats.txt.gz\n'\
+	'@g' > runfiles/validate-bam.txt # end
 	SLURM_Array -c runfiles/validate-bam.txt \
 		--mail  $$EMAIL\
 		-r runs/VALIDATE-BAM \
