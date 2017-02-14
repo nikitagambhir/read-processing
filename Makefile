@@ -31,6 +31,8 @@ ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria)
 ROOT_DIR := $(strip $(ROOT_DIR))
 TMP      := \$$TMPDIR
 IDX_DIR  := bt2-index
+BOWTIE   := bowtie/2.2
+SAMTOOLS := samtools/1.3
 SAM_DIR  := SAMS
 BAM_DIR  := BAMS
 RUNFILES := runfiles
@@ -52,7 +54,7 @@ runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
 	SLURM_Array -c $(RUNFILES)/make-index.txt \
 		-r runs/BOWTIE2-BUILD \
-		-l bowtie/2.2 \
+		-l $(BOWTIE) \
 		-w $(ROOT_DIR)
 
 $(IDX) : scripts/make-index.sh $(FASTA) runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
@@ -63,7 +65,7 @@ runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) | $(SAM_DIR)
 	SLURM_Array -c $(RUNFILES)/make-alignment.txt \
 		--mail $(EMAIL) \
 		-r runs/MAP-READS \
-		-l bowtie/2.2 \
+		-l $(BOWTIE) \
 		--hold \
 		-w $(ROOT_DIR)
 
@@ -85,10 +87,26 @@ runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) | $(SAM_DIR)
 	SLURM_Array -c $(RUNFILES)/validate-sam.txt \
 		--mail $(EMAIL) \
 		-r runs/VALIDATE-SAM \
-		-l samtools/1.3 \
+		-l $(SAMTOOLS) \
 		--hold \
 		-w $(ROOT_DIR)
 
+# SAMTOOLS SPECIFICATIONS
+#
+# http://www.htslib.org/doc/
+# view
+# # -b       output BAM
+# # -S       ignored (input format is auto-detected)
+# # -u       uncompressed BAM output (implies -b)
+#
+# sort
+# # -n         Sort by read name
+# # -o FILE    output file name [stdout]
+# # -O FORMAT  Write output as FORMAT ('sam'/'bam'/'cram')   (either -O or
+# # -T PREFIX  Write temporary files to PREFIX.nnnn.bam       -T is required)
+#
+# calmd
+# # -u         uncompressed BAM output (for piping)
 runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM) | $(BAM_DIR)
 	echo $^ | \
 	sed -r 's/'\
@@ -100,10 +118,14 @@ runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM) | $(BAM_DIR)
 	SLURM_Array -c $(RUNFILES)/sam-to-bam.txt \
 		--mail $(EMAIL) \
 		-r runs/SAM-TO-BAM \
-		-l samtools/1.3 \
+		-l $(SAMTOOLS) \
 		--hold \
 		-w $(ROOT_DIR)
 
+# Fix mate information and add the MD tag.
+# # http://samtools.github.io/hts-specs/
+# # MD = String for mismatching positions
+# # NM = Edit distance to the reference
 runs/FIXMATE/FIXMATE.sh: $(BAM) | $(BAM_DIR)
 	echo $^ | \
 	sed -r 's@'\
@@ -117,7 +139,7 @@ runs/FIXMATE/FIXMATE.sh: $(BAM) | $(BAM_DIR)
 	SLURM_Array -c $(RUNFILES)/fixmate.txt \
 		--mail $(EMAIL) \
 		-r runs/FIXMATE \
-		-l samtools/1.3 \
+		-l $(SAMTOOLS) \
 		--hold \
 		-w $(ROOT_DIR)
 
@@ -132,7 +154,7 @@ runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED) | $(BAM_DIR)
 	SLURM_Array -c $(RUNFILES)/validate-bam.txt \
 		--mail $(EMAIL) \
 		-r runs/VALIDATE-BAM \
-		-l samtools/1.3 \
+		-l $(SAMTOOLS) \
 		--hold \
 		-w $(ROOT_DIR)
 
