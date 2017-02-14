@@ -30,8 +30,8 @@ ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria)
 ROOT_DIR := $(strip $(ROOT_DIR))
 TMP      := \$$TMPDIR
 IDX_DIR  := bt2-index
-SAM_DIR  := sams
-BAM_DIR  := bams
+SAM_DIR  := SAMS
+BAM_DIR  := BAMS
 RUNFILES := runfiles
 FASTA    := mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
 PREFIX   := Ssc_mito # prefix for the bowtie2 index
@@ -44,10 +44,10 @@ BAM      := $(patsubst $(SAM_DIR)/%.sam, $(BAM_DIR)/%_nsort, $(SAM))
 FIXED    := $(patsubst %_nsort, %_fixed.bam, $(BAM))
 BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 
-runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA)
-ifeq ($(wildcard $(IDX_DIR)/.),)
-	mkdir $(IDX_DIR)
-endif
+$(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR):
+	-mkdir $@
+
+runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
 	SLURM_Array -c $(RUNFILES)/make-index.txt \
 		-r runs/BOWTIE2-BUILD \
@@ -57,12 +57,8 @@ endif
 $(IDX) : scripts/make-index.sh $(FASTA) runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
 index : $(FASTA) $(IDX) 
 
-runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) 
-ifeq ($(wildcard $(SAM_DIR)/.),)
-	mkdir $(SAM_DIR)
-	mkdir $(BAM_DIR)
-endif
-	$< $(addprefix index/, $(PREFIX)) $(SAM_DIR) $(READS)
+runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) | $(SAM_DIR) 
+	$< $(addprefix $(IDX_DIR)/, $(PREFIX)) $(SAM_DIR) $(READS)
 	SLURM_Array -c $(RUNFILES)/make-alignment.txt \
 		--mail  $$EMAIL\
 		-r runs/MAP-READS \
@@ -81,7 +77,7 @@ map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL)
 runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) 
 	echo $^ | \
 	sed -r 's/'\
-	'([^ ]+?).sam *'\
+	'($(SAM_DIR)[^ ]+?).sam *'\
 	'/'\
 	'samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n'\
 	'/g' > $(RUNFILES)/validate-sam.txt # end
@@ -92,7 +88,7 @@ runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM)
 		--hold \
 		-w $(ROOT_DIR)
 
-runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM)
+runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM) | $(BAM_DIR)
 	echo $^ | \
 	sed -r 's/'\
 	'$(SAM_DIR)([^ ]+?).sam *'\
@@ -149,12 +145,7 @@ help :
 	@echo "BAM DIR   : " $(BAM_DIR)
 	@echo "GENOME    : " $(FASTA)
 	@echo "RUNFILES  : " $(RUNFILES)
-	@echo
-	@echo "READS     : " 
-	@echo $(READS)
-	@echo
-	@echo "INDEX     : "
-	@echo $(IDX)
+	@echo "READS     : " $(READS)
 	@echo
 
 runclean.%:

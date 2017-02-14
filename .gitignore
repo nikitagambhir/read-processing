@@ -1,6 +1,6 @@
-index/*
+bt2-index/*
 runs/*
 mitochondria_genome/*
 reads/*
-mapped/*
-bams/*
+SAMS/*
+BAMS/*
