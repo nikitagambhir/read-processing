@@ -270,6 +270,15 @@ runs/MAKE-GATK-REF/MAKE-GATK-REF.sh: $(FASTA) | $(REF_DIR)
 
 $(REF_IDX): $(FASTA) runs/MAKE-GATK-REF/MAKE-GATK-REF.sh
 
+# Pain points:
+# 
+# GATK is very picky as far as paths go. If it sees a relative
+# path, it will use pwd. On this SLURM system, this results in
+# a path that's not accessible.
+#
+# GATK assumes that you named your dict file with the basename
+# of your file and not just appended dict on the end.
+#
 runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 	echo $^ | \
 	sed -r 's@'\
