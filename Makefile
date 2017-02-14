@@ -176,7 +176,7 @@ runs/MARK-DUPS/MARK-DUPS.sh: $(FIXED)
 	'I=\1_fixed.bam '\
 	'O=\1_dupmrk.bam '\
 	'MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 '\
-	'ASSUME_SORT_ORDER=coordinate '\
+	'ASSUME_SORTED=true '\
 	'M=\1_marked_dup_metrics.txt; '\
 	'samtools index \1_dupmrk.bam\n'\
 	'@g' > $(RUNFILES)/mark-dups.txt # end
