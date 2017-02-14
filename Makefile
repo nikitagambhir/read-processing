@@ -77,7 +77,9 @@ map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL)
 
 runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM)
 	echo $^ | \
-	sed -r 's/([^ ]+?).sam */samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n/g' \
+	sed -r \
+	's/([^ ]+?).sam */'\
+	'samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n/g' \
 	> runfiles/validate-sam.txt
 	SLURM_Array -c runfiles/validate-sam.txt \
 		--mail  $$EMAIL\
