@@ -4,6 +4,19 @@ Alignment of Sclerotinia mitochondrial genomes
 This will contain the analysis of the mitochondrial genomes for our 
 *Sclerotinia* isolates. This is controlled via makefile.
 
+To build your analysis, add your data in the Required Directories below
+and run
+
+```
+make
+```
+
+This will generate the genome index, sam files, bam files, g.vcf files
+and a final `GATK/res.vcf.gz`.
+
+You can look at the Makefile for details.
+
+
 The processing of the analyses are based on the workflow presented here:
 https://github.com/knausb/bam_processing
 
