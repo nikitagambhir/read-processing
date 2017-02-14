@@ -195,7 +195,7 @@ runs/VALIDATE-DUPS/VALIDATE-DUPS.sh: $(DUPMRK)
 	'([^ ]+?)_dupmrk.bam *'\
 	'@'\
 	'samtools stats \1_dupmrk.bam | '\
-	'gzip -c \1_dupmrk_stats.txt.gz'\
+	'gzip -c \1_dupmrk_stats.txt.gz\n'\
 	'@g' > $(RUNFILES)/validate-dups.txt # end
 	SLURM_Array -c $(RUNFILES)/validate-dups.txt \
 		--mail $(EMAIL) \
