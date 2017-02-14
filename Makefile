@@ -183,8 +183,9 @@ runs/MARK-DUPS/MARK-DUPS.sh: $(FIXED)
 	SLURM_Array -c $(RUNFILES)/mark-dups.txt \
 		--mail $(EMAIL) \
 		-r runs/MARK-DUPS \
-		-l $(PICARD) $(SAMTOOLS)\
+		-l $(PICARD) $(SAMTOOLS) \
 		--hold \
+		-m 25g \
 		-w $(ROOT_DIR)
 
 $(DUPMRK) : $(FIXED) runs/MARK-DUPS/MARK-DUPS.sh
@@ -199,7 +200,7 @@ runs/VALIDATE-DUPS/VALIDATE-DUPS.sh: $(DUPMRK)
 	'@g' > $(RUNFILES)/validate-dups.txt # end
 	SLURM_Array -c $(RUNFILES)/validate-dups.txt \
 		--mail $(EMAIL) \
-		-r runs/VALDIATE-DUPS \
+		-r runs/VALIDATE-DUPS \
 		-l $(SAMTOOLS) \
 		--hold \
 		-w $(ROOT_DIR)	
