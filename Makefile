@@ -24,7 +24,7 @@
 
 .PHONY: all index help map clean
 
-all: index map
+all: index map gvcf
 
 
 EMAIL    := ***REMOVED***
@@ -35,11 +35,16 @@ IDX_DIR  := bt2-index
 BOWTIE   := bowtie/2.2
 SAMTOOLS := samtools/1.3
 PICARD   := picard/1.1
+GATK     := gatk/3.4
+gatk     := \$$GATK
 PIC      := \$$PICARD
 SAM_DIR  := SAMS
 BAM_DIR  := BAMS
+GVCF_DIR := GVCF
+REF_DIR  := REF
 RUNFILES := runfiles
 FASTA    := mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
+REF_IDX  := $(patsubst mitochondria_genome/%.fasta.gz, $(REF_DIR)/%.fasta, $(FASTA))
 PREFIX   := Ssc_mito # prefix for the bowtie2 index
 READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
@@ -49,13 +54,15 @@ SAM_VAL  := $(patsubst %.sam, %_stats.txt.gz, $(SAM))
 BAM      := $(patsubst $(SAM_DIR)/%.sam, $(BAM_DIR)/%_nsort, $(SAM))
 FIXED    := $(patsubst %_nsort, %_fixed.bam, $(BAM))
 DUPMRK   := $(patsubst %_nsort, %_dupmrk.bam, $(BAM))
+GVCF     := $(patsubst $(BAM_DIR)/%_nsort, $(GVCF_DIR)/%.g.vcf.gz, $(BAM))
 DUP_VAL  := $(patsubst %_nsort, %_dupmrk_stats.txt.gz, $(BAM))
 BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 
-$(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR):
+$(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
 	-mkdir $@
 index : $(FASTA) $(IDX) 
 map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
+gvcf : $(REF_IDX) $(GVCF)
 
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
@@ -207,14 +214,84 @@ runs/VALIDATE-DUPS/VALIDATE-DUPS.sh: $(DUPMRK)
 
 $(DUP_VAL): $(DUPMRK) runs/VALIDATE-DUPS/VALIDATE-DUPS.sh
 
-# 
-# CMD="$JAVA -Djava.io.tmpdir=/data/ \
-#      -jar $PIC MarkDuplicates \
-#           I=bams/${arr[0]}_fixed.bam \
-#                O=bams/${arr[0]}_dupmrk.bam \
-#                     MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000 \
-#                          ASSUME_SORT_ORDER=coordinate \
-#                               M=bams/${arr[0]}_marked_dup_metrics.txt"
+
+# https://www.broadinstitute.org/gatk/documentation/article?id=3893
+# # https://www.broadinstitute.org/gatk/documentation/tooldocs/org_broadinstitute_gatk_tools_walkers_haplotypecaller_HaplotypeCaller.php
+# # https://www.broadinstitute.org/gatk/documentation/tooldocs/org_broadinstitute_gatk_tools_walkers_variantutils_GenotypeGVCFs.php
+#
+# # Note that Haplotypecaller requires an indexed bam.
+# # If yours is not, use SAMtools.
+#
+# # If you're dealing with legacy data you may encounter legacy quality encodings.
+# # If you encounter this use:
+# #
+# # --fix_misencoded_quality_scores
+# #
+# # In your GATK call. (But only on the offending libraries.)
+# # https://software.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_engine_CommandLineGATK.php#--fix_misencoded_quality_scores
+# # https://en.wikipedia.org/wiki/FASTQ_format
+#
+#
+# CMD="$JAVA -Djava.io.tmpdir=/data/ -jar $GATK \
+#   -T HaplotypeCaller \
+#   -R $REF \
+#   --emitRefConfidence GVCF \
+#   -ploidy 2 \
+#   -I bams/${arr[0]}_dupmrk.bam \
+#   -o gvcf/${arr[0]}_2n.g.vcf.gz"
+#
+#
+# CMD="$JAVA -Djava.io.tmpdir=/data/ -jar $GATK \
+#    -T HaplotypeCaller \
+#    -R $REF \
+#    --emitRefConfidence GVCF \
+#    -ploidy 3 \
+#    -I bams/${arr[0]}_dupmrk.bam \
+#    -o gvcf/${arr[0]}_3n.g.vcf.gz"
+#
+
+runs/MAKE-GATK-REF/MAKE-GATK-REF.sh: $(FASTA) | $(REF_DIR)
+	echo $^ | \
+	sed -r 's@'\
+	'(mitochondria_genome)/(.+?).gz'\
+	'@'\
+	'zcat \1/\2.gz > $(REF_DIR)/\2; '\
+	'java -jar $(PIC) CreateSequenceDictionary '\
+	'R=$(REF_DIR)/\2 '\
+	'O=$(REF_DIR)/\2.dict; '\
+	'samtools faidx $(REF_DIR)/\2'\
+	'@g' > $(RUNFILES)/make-gatk-ref.txt # end
+	SLURM_Array -c $(RUNFILES)/make-gatk-ref.txt \
+		--mail $(EMAIL) \
+		-r runs/MAKE-GATK-REF \
+		-l $(PICARD) $(SAMTOOLS) \
+		--hold \
+		-w $(ROOT_DIR)
+
+$(REF_IDX): $(FASTA) runs/MAKE-GATK-REF/MAKE-GATK-REF.sh
+
+runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
+	echo $^ | \
+	sed -r 's@'\
+	'([^ ]+?)_dupmrk.bam *'\
+	'@'\
+	'java -Djava.io.tmpdir=$(TMP) -jar $(gatk) '\
+	'-T HaplotypeCaller '\
+	'-R $(REF_IDX) '\
+	'--emitRefConfidence GVCF '\
+	'-ploidy 1 '\
+	'-I \1_dupmrk.bam '\
+	'-o $(GVCF_DIR)/\1.g.vcf.gz\n'\
+	'@g' > $(RUNFILES)/make-gvcf.txt
+	SLURM_Array -c $(RUNFILES)/make-gvcf.txt \
+		--mail $(EMAIL) \
+		-r runs/MAKE-GVCF \
+		-l $(GATK) \
+		--hold \
+		-w $(ROOT_DIR)
+
+$(GVCF): $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
+
 help :
 	@echo
 	@echo "COMMANDS"
