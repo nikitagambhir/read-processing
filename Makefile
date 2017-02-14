@@ -24,7 +24,7 @@
 
 .PHONY: all index help map clean
 
-all: index map gvcf
+all: index map vcf
 
 
 EMAIL    := ***REMOVED***
@@ -57,12 +57,13 @@ DUPMRK   := $(patsubst %_nsort, %_dupmrk.bam, $(BAM))
 GVCF     := $(patsubst reads/%,$(GVCF_DIR)/%.g.vcf.gz, $(READS))
 DUP_VAL  := $(patsubst %_nsort, %_dupmrk_stats.txt.gz, $(BAM))
 BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
+VCF      := $(GVCF_DIR)/res.vcf.gz
 
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
 	-mkdir $@
 index : $(FASTA) $(IDX) 
 map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
-gvcf : $(REF_IDX) $(GVCF)
+vcf : $(REF_IDX) $(GVCF) $(VCF)
 
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
@@ -302,15 +303,24 @@ runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 
 $(GVCF): $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
 
+runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
+	printf "java -Djava.io.tmpdir=$(TMP) "\
+	"-jar $(gatk) "\
+	"-T GenotypeGVCFs "\
+	"-R $(ROOT_DIR)/$(REF_IDX) "\
+	"$(addprefix -V , $^) "\
+	"-o $(GVCF_DIR)/res.vcf.gz" \
+	> $(RUNFILES)/make-vcf.txt
+	SLURM_Array -c $(RUNFILES)/make-vcf.txt \
+		--mail $(EMAIL) \
+		-r runs/MAKE-VCF \
+		-l $(GATK) \
+		--hold \
+		-m 25g \
+		-w $(ROOT_DIR)
 
 
-# CMD="$JAVA -Djava.io.tmpdir=/data/ \
-#   -jar $GATK \
-#   -T GenotypeGVCFs \
-#   -R $REF \
-#   -L Supercontig_1.$SGE_TASK_ID \
-#   -V gvcfs.list \
-#   -o vcfs/sc_1.$SGE_TASK_ID.vcf.gz"
+$(VCF): $(GVCF) runs/MAKE-VCF/MAKE-VCF.sh
 
 help :
 	@echo
