@@ -26,8 +26,6 @@
 
 all: index map
 
-index : $(FASTA) $(IDX) 
-map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
 
 EMAIL    := ***REMOVED***
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) 
@@ -56,6 +54,8 @@ BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR):
 	-mkdir $@
+index : $(FASTA) $(IDX) 
+map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
 
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
