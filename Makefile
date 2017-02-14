@@ -44,7 +44,7 @@ GVCF_DIR := GVCF
 REF_DIR  := REF
 RUNFILES := runfiles
 FASTA    := mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
-REF_IDX  := $(patsubst mitochondria_genome/%.fasta.gz, $(REF_DIR)/%.fasta, $(FASTA))
+REF_IDX  := $(patsubst mitochondria_genome/%.fasta.gz,$(REF_DIR)/%.fasta, $(FASTA))
 PREFIX   := Ssc_mito # prefix for the bowtie2 index
 READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
@@ -54,7 +54,7 @@ SAM_VAL  := $(patsubst %.sam, %_stats.txt.gz, $(SAM))
 BAM      := $(patsubst $(SAM_DIR)/%.sam, $(BAM_DIR)/%_nsort, $(SAM))
 FIXED    := $(patsubst %_nsort, %_fixed.bam, $(BAM))
 DUPMRK   := $(patsubst %_nsort, %_dupmrk.bam, $(BAM))
-GVCF     := $(patsubst $(BAM_DIR)/%_nsort, $(GVCF_DIR)/%.g.vcf.gz, $(BAM))
+GVCF     := $(patsubst reads/%,$(GVCF_DIR)/%.g.vcf.gz, $(READS))
 DUP_VAL  := $(patsubst %_nsort, %_dupmrk_stats.txt.gz, $(BAM))
 BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 
@@ -253,13 +253,13 @@ $(DUP_VAL): $(DUPMRK) runs/VALIDATE-DUPS/VALIDATE-DUPS.sh
 runs/MAKE-GATK-REF/MAKE-GATK-REF.sh: $(FASTA) | $(REF_DIR)
 	echo $^ | \
 	sed -r 's@'\
-	'(mitochondria_genome)/(.+?).gz'\
+	'(mitochondria_genome)/(.+?).fasta.gz'\
 	'@'\
-	'zcat \1/\2.gz > $(REF_DIR)/\2; '\
+	'zcat \1/\2.fasta.gz > $(REF_DIR)/\2.fasta; '\
 	'java -jar $(PIC) CreateSequenceDictionary '\
-	'R=$(REF_DIR)/\2 '\
+	'R=$(REF_DIR)/\2.fasta '\
 	'O=$(REF_DIR)/\2.dict; '\
-	'samtools faidx $(REF_DIR)/\2'\
+	'samtools faidx $(REF_DIR)/\2.fasta'\
 	'@g' > $(RUNFILES)/make-gatk-ref.txt # end
 	SLURM_Array -c $(RUNFILES)/make-gatk-ref.txt \
 		--mail $(EMAIL) \
@@ -273,14 +273,14 @@ $(REF_IDX): $(FASTA) runs/MAKE-GATK-REF/MAKE-GATK-REF.sh
 runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 	echo $^ | \
 	sed -r 's@'\
-	'([^ ]+?)_dupmrk.bam *'\
+	'$(BAM_DIR)/([^ ]+?)_dupmrk.bam *'\
 	'@'\
 	'java -Djava.io.tmpdir=$(TMP) -jar $(gatk) '\
 	'-T HaplotypeCaller '\
-	'-R $(REF_IDX) '\
+	'-R $(ROOT_DIR)/$(REF_IDX) '\
 	'--emitRefConfidence GVCF '\
 	'-ploidy 1 '\
-	'-I \1_dupmrk.bam '\
+	'-I $(BAM_DIR)/\1_dupmrk.bam '\
 	'-o $(GVCF_DIR)/\1.g.vcf.gz\n'\
 	'@g' > $(RUNFILES)/make-gvcf.txt
 	SLURM_Array -c $(RUNFILES)/make-gvcf.txt \
@@ -288,9 +288,20 @@ runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 		-r runs/MAKE-GVCF \
 		-l $(GATK) \
 		--hold \
+		-m 25g \
 		-w $(ROOT_DIR)
 
 $(GVCF): $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
+
+
+
+# CMD="$JAVA -Djava.io.tmpdir=/data/ \
+#   -jar $GATK \
+#   -T GenotypeGVCFs \
+#   -R $REF \
+#   -L Supercontig_1.$SGE_TASK_ID \
+#   -V gvcfs.list \
+#   -o vcfs/sc_1.$SGE_TASK_ID.vcf.gz"
 
 help :
 	@echo

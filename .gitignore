@@ -4,3 +4,6 @@ mitochondria_genome/*
 reads/*
 SAMS/*
 BAMS/*
+REF/*
+GVCF/*
+
