@@ -4,21 +4,31 @@ Alignment of Sclerotinia mitochondrial genomes
 This will contain the analysis of the mitochondrial genomes for our 
 *Sclerotinia* isolates. This is controlled via makefile.
 
-This is the current structure of the repository as of 2017-02-14 12:00 CST
+The processing of the analyses are based on the workflow presented here:
+https://github.com/knausb/bam_processing
+
+This is the current structure of the repository as of 2017-02-14 16:49 CST
 
 ```
 .
 |-- BAMS
 |-- bt2-index
+|-- GVCF
 |-- mitochondria_genome
 |-- reads
+|-- REF
 |-- runfiles
 |-- runs
 |   |-- BOWTIE2-BUILD
 |   |-- FIXMATE
+|   |-- MAKE-GATK-REF
+|   |-- MAKE-GVCF
+|   |-- MAKE-VCF
 |   |-- MAP-READS
+|   |-- MARK-DUPS
 |   |-- SAM-TO-BAM
 |   |-- VALIDATE-BAM
+|   |-- VALIDATE-DUPS
 |   `-- VALIDATE-SAM
 |-- SAMS
 `-- scripts
