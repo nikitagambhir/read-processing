@@ -26,6 +26,7 @@
 
 all: index map
 
+EMAIL    := ***REMOVED***
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) 
 ROOT_DIR := $(strip $(ROOT_DIR))
 TMP      := \$$TMPDIR
@@ -60,7 +61,7 @@ index : $(FASTA) $(IDX)
 runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) | $(SAM_DIR) 
 	$< $(addprefix $(IDX_DIR)/, $(PREFIX)) $(SAM_DIR) $(READS)
 	SLURM_Array -c $(RUNFILES)/make-alignment.txt \
-		--mail  $$EMAIL\
+		--mail $(EMAIL) \
 		-r runs/MAP-READS \
 		-l bowtie/2.2 \
 		--hold \
@@ -82,7 +83,7 @@ runs/VALIDATE-SAM/VALIDATE-SAM.sh: $(SAM) | $(SAM_DIR)
 	'samtools stats \1.sam | gzip -c > \1_stats.txt.gz\n'\
 	'/g' > $(RUNFILES)/validate-sam.txt # end
 	SLURM_Array -c $(RUNFILES)/validate-sam.txt \
-		--mail  $$EMAIL\
+		--mail $(EMAIL) \
 		-r runs/VALIDATE-SAM \
 		-l samtools/1.3 \
 		--hold \
@@ -97,7 +98,7 @@ runs/SAM-TO-BAM/SAM-TO-BAM.sh: $(SAM) | $(BAM_DIR)
 	'samtools sort -n -O bam -o $(BAM_DIR)\1_nsort -T $(BAM_DIR)\1_nsort_tmp\n'\
 	'/g' > $(RUNFILES)/sam-to-bam.txt # end
 	SLURM_Array -c $(RUNFILES)/sam-to-bam.txt \
-		--mail  $$EMAIL\
+		--mail $(EMAIL) \
 		-r runs/SAM-TO-BAM \
 		-l samtools/1.3 \
 		--hold \
@@ -114,7 +115,7 @@ runs/FIXMATE/FIXMATE.sh: $(BAM) | $(BAM_DIR)
 	'samtools calmd -b - $(TMP)/r.fa > \1_fixed.bam\n'\
 	'@g' > $(RUNFILES)/fixmate.txt # end
 	SLURM_Array -c $(RUNFILES)/fixmate.txt \
-		--mail  $$EMAIL\
+		--mail $(EMAIL) \
 		-r runs/FIXMATE \
 		-l samtools/1.3 \
 		--hold \
@@ -129,7 +130,7 @@ runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED) | $(BAM_DIR)
 	'gzip -c > \1_fixed_stats.txt.gz\n'\
 	'@g' > $(RUNFILES)/validate-bam.txt # end
 	SLURM_Array -c $(RUNFILES)/validate-bam.txt \
-		--mail  $$EMAIL\
+		--mail $(EMAIL) \
 		-r runs/VALIDATE-BAM \
 		-l samtools/1.3 \
 		--hold \
@@ -137,6 +138,18 @@ runs/VALIDATE-BAM/VALIDATE-BAM.sh: $(FIXED) | $(BAM_DIR)
 
 help :
 	@echo
+	@echo "COMMANDS"
+	@echo "============"
+	@echo
+	@echo "all"
+	@echo "index" 
+	@echo "help" 
+	@echo "runclean.JOB_NAME"
+	@echo
+	@echo "PARAMETERS"
+	@echo "============"
+	@echo
+	@echo "EMAIL     : " $(EMAIL)
 	@echo "ROOT DIR  : " $(ROOT_DIR)
 	@echo "TEMP DIR  : " $(TMP)
 	@echo "INDEX DIR : " $(IDX_DIR)
