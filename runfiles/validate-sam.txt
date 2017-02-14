@@ -52,4 +52,5 @@ samtools stats mapped/SS.11.51.sam | gzip -c > mapped/SS.11.51_stats.txt.gz
 samtools stats mapped/SS.11.52.sam | gzip -c > mapped/SS.11.52_stats.txt.gz
 samtools stats mapped/SS.11.53.sam | gzip -c > mapped/SS.11.53_stats.txt.gz
 samtools stats mapped/SS.11.54.sam | gzip -c > mapped/SS.11.54_stats.txt.gz
-mapped/SS.11.55.sam
+samtools stats mapped/SS.11.55.sam | gzip -c > mapped/SS.11.55_stats.txt.gz
+
