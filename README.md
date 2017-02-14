@@ -4,12 +4,12 @@ Alignment of Sclerotinia mitochondrial genomes
 This will contain the analysis of the mitochondrial genomes for our 
 *Sclerotinia* isolates. This is controlled via makefile.
 
-This is the current structure of the repository as of 2017-02-13 15:36 CST
+This is the current structure of the repository as of 2017-02-14 12:00 CST
 
 ```
-|-- bams
-|-- index
-|-- mapped
+.
+|-- BAMS
+|-- bt2-index
 |-- mitochondria_genome
 |-- reads
 |-- runfiles
@@ -20,6 +20,7 @@ This is the current structure of the repository as of 2017-02-13 15:36 CST
 |   |-- SAM-TO-BAM
 |   |-- VALIDATE-BAM
 |   `-- VALIDATE-SAM
+|-- SAMS
 `-- scripts
 ```
 
@@ -33,7 +34,8 @@ Required directories
  Generated directories
  ---------------------
  
- - scripts/: shell scripts for pre-processing submission scripts (kept in this directory for posterity)
- - *index/*: genome index files generated via `make index` 
- - *mapped/*: mapped sam files generated via `make map`
+ - runfiles/: shell scripts for pre-processing submission scripts (kept in this directory for posterity)
+ - *bt2-index/*: genome index files generated via `make index` 
+ - *SAMS/*: mapped sam files generated via `make map`
+ - *BAMS/*: filtered bam files
  - *runs/*: std out and std err of runs
