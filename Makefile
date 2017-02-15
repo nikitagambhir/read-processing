@@ -377,8 +377,8 @@ manifest :
 	"FIXED BAM VALIDATION,"\
 	"MARKED DUPLICATES BAM,"\
 	"MARKED DUPLICATES BAM VALIDATION,"\
-	"GVCF FILE\n" > manifest.txt
-	printf "$(MANIFEST)" >> manifest.txt
+	"GVCF FILE\n" > manifest.csv
+	printf "$(MANIFEST)" >> manifest.csv
 
 runclean.%:
 	$(RM) -r runs/$*
