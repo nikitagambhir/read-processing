@@ -22,7 +22,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.PHONY: all index help map clean
+.PHONY: all index help map clean burn
 
 all: index map vcf
 
@@ -334,6 +334,7 @@ help :
 	@echo "index" 
 	@echo "help" 
 	@echo "runclean.JOB_NAME"
+	@echo "burn"
 	@echo
 	@echo "PARAMETERS"
 	@echo "============"
@@ -351,5 +352,7 @@ help :
 	@echo
 
 runclean.%:
-	$(RM) -rfv runs/$*
+	$(RM) -r runs/$*
 
+burn:
+	$(RM) -r $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(GVCF_DIR) runs $(REF_DIR) $(RUNFILES)
