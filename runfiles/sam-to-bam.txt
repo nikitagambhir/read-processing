@@ -3,4 +3,9 @@ samtools view -bSu SAMS/SS.11.02.sam | samtools sort -n -O bam -o BAMS/SS.11.02_
 samtools view -bSu SAMS/SS.11.03.sam | samtools sort -n -O bam -o BAMS/SS.11.03_nsort -T BAMS/SS.11.03_nsort_tmp
 samtools view -bSu SAMS/SS.11.04.sam | samtools sort -n -O bam -o BAMS/SS.11.04_nsort -T BAMS/SS.11.04_nsort_tmp
 samtools view -bSu SAMS/SS.11.05.sam | samtools sort -n -O bam -o BAMS/SS.11.05_nsort -T BAMS/SS.11.05_nsort_tmp
+samtools view -bSu SAMS/SS.11.06.sam | samtools sort -n -O bam -o BAMS/SS.11.06_nsort -T BAMS/SS.11.06_nsort_tmp
+samtools view -bSu SAMS/SS.11.07.sam | samtools sort -n -O bam -o BAMS/SS.11.07_nsort -T BAMS/SS.11.07_nsort_tmp
+samtools view -bSu SAMS/SS.11.08.sam | samtools sort -n -O bam -o BAMS/SS.11.08_nsort -T BAMS/SS.11.08_nsort_tmp
+samtools view -bSu SAMS/SS.11.09.sam | samtools sort -n -O bam -o BAMS/SS.11.09_nsort -T BAMS/SS.11.09_nsort_tmp
+samtools view -bSu SAMS/SS.11.10.sam | samtools sort -n -O bam -o BAMS/SS.11.10_nsort -T BAMS/SS.11.10_nsort_tmp
 
