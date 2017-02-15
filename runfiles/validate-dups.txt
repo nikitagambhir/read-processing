@@ -8,4 +8,14 @@ samtools stats BAMS/SS.11.07_dupmrk.bam | gzip -c BAMS/SS.11.07_dupmrk_stats.txt
 samtools stats BAMS/SS.11.08_dupmrk.bam | gzip -c BAMS/SS.11.08_dupmrk_stats.txt.gz
 samtools stats BAMS/SS.11.09_dupmrk.bam | gzip -c BAMS/SS.11.09_dupmrk_stats.txt.gz
 samtools stats BAMS/SS.11.10_dupmrk.bam | gzip -c BAMS/SS.11.10_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.11_dupmrk.bam | gzip -c BAMS/SS.11.11_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.12_dupmrk.bam | gzip -c BAMS/SS.11.12_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.13_dupmrk.bam | gzip -c BAMS/SS.11.13_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.14_dupmrk.bam | gzip -c BAMS/SS.11.14_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.15_dupmrk.bam | gzip -c BAMS/SS.11.15_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.16_dupmrk.bam | gzip -c BAMS/SS.11.16_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.17_dupmrk.bam | gzip -c BAMS/SS.11.17_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.18_dupmrk.bam | gzip -c BAMS/SS.11.18_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.19_dupmrk.bam | gzip -c BAMS/SS.11.19_dupmrk_stats.txt.gz
+samtools stats BAMS/SS.11.20_dupmrk.bam | gzip -c BAMS/SS.11.20_dupmrk_stats.txt.gz
 

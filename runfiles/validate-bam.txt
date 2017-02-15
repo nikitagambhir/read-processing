@@ -8,4 +8,14 @@ samtools stats BAMS/SS.11.07_fixed.bam | gzip -c > BAMS/SS.11.07_fixed_stats.txt
 samtools stats BAMS/SS.11.08_fixed.bam | gzip -c > BAMS/SS.11.08_fixed_stats.txt.gz
 samtools stats BAMS/SS.11.09_fixed.bam | gzip -c > BAMS/SS.11.09_fixed_stats.txt.gz
 samtools stats BAMS/SS.11.10_fixed.bam | gzip -c > BAMS/SS.11.10_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.11_fixed.bam | gzip -c > BAMS/SS.11.11_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.12_fixed.bam | gzip -c > BAMS/SS.11.12_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.13_fixed.bam | gzip -c > BAMS/SS.11.13_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.14_fixed.bam | gzip -c > BAMS/SS.11.14_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.15_fixed.bam | gzip -c > BAMS/SS.11.15_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.16_fixed.bam | gzip -c > BAMS/SS.11.16_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.17_fixed.bam | gzip -c > BAMS/SS.11.17_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.18_fixed.bam | gzip -c > BAMS/SS.11.18_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.19_fixed.bam | gzip -c > BAMS/SS.11.19_fixed_stats.txt.gz
+samtools stats BAMS/SS.11.20_fixed.bam | gzip -c > BAMS/SS.11.20_fixed_stats.txt.gz
 
