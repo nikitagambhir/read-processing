@@ -22,7 +22,7 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.PHONY: all index help map clean burn
+.PHONY: all index help map clean burn manifest
 
 all: index map vcf
 
@@ -59,11 +59,26 @@ DUP_VAL  := $(patsubst %_nsort, %_dupmrk_stats.txt.gz, $(BAM))
 BAM_VAL  := $(patsubst %_fixed.bam, %_fixed_stats.txt.gz, $(FIXED))
 VCF      := $(GVCF_DIR)/res.vcf.gz
 
+joiner = reads/$(1)_1.fq.gz,\
+	reads/$(1)_2.fq.gz,\
+	$(SAM_DIR)/$(1).sam,\
+	$(SAM_DIR)/$(1)_stats.txt.gz,\
+	$(BAM_DIR)/$(1)_nsort,\
+	$(BAM_DIR)/$(1)_fixed.bam,\
+	$(BAM_DIR)/$(1)_fixed_stats.txt.gz,\
+	$(BAM_DIR)/$(1)_dupmrk.bam,\
+	$(BAM_DIR)/$(1)_dupmrk_stats.txt.gz,\
+	$(GVCF_DIR)/$(1).g.vcf.gz\\n
+
+MANIFEST := $(foreach x,$(patsubst reads/%,%, $(READS)),$(call joiner,$(x)))
+
+
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
 	-mkdir $@
 index : $(FASTA) $(IDX) 
 map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
 vcf : $(REF_IDX) $(GVCF) $(VCF)
+
 
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
@@ -333,8 +348,9 @@ help :
 	@echo "all"
 	@echo "index" 
 	@echo "help" 
-	@echo "runclean.JOB_NAME"
 	@echo "burn"
+	@echo "manifest"
+	@echo "runclean.JOB_NAME"
 	@echo
 	@echo "PARAMETERS"
 	@echo "============"
@@ -350,6 +366,19 @@ help :
 	@echo "RUNFILES  : " $(RUNFILES)
 	@echo "READS     : " $(READS)
 	@echo
+
+manifest :
+	printf "READ1,"\
+	"READ2,"\
+	"SAM,"\
+	"SAM VALIDATION,"\
+	"SORTED BAM,"\
+	"FIXED BAM,"\
+	"FIXED BAM VALIDATION,"\
+	"MARKED DUPLICATES BAM,"\
+	"MARKED DUPLICATES BAM VALIDATION,"\
+	"GVCF FILE\n" > manifest.txt
+	printf "$(MANIFEST)" >> manifest.txt
 
 runclean.%:
 	$(RM) -r runs/$*
