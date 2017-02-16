@@ -43,8 +43,9 @@ BAM_DIR  := BAMS
 GVCF_DIR := GVCF
 REF_DIR  := REF
 RUNFILES := runfiles
-FASTA    := mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
-REF_IDX  := $(patsubst mitochondria_genome/%.fasta.gz,$(REF_DIR)/%.fasta, $(FASTA))
+FAST_DIR := mitochondria_genome
+FASTA    := $(FAST_DIR)/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
+REF_IDX  := $(patsubst $(FAST_DIR)/%.fasta.gz,$(REF_DIR)/%.fasta, $(FASTA))
 PREFIX   := Ssc_mito # prefix for the bowtie2 index
 READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
@@ -269,7 +270,7 @@ $(DUP_VAL): $(DUPMRK) runs/VALIDATE-DUPS/VALIDATE-DUPS.sh
 runs/MAKE-GATK-REF/MAKE-GATK-REF.sh: $(FASTA) | $(REF_DIR)
 	echo $^ | \
 	sed -r 's@'\
-	'(mitochondria_genome)/(.+?).fasta.gz'\
+	'($(FAST_DIR))/(.+?).fasta.gz'\
 	'@'\
 	'zcat \1/\2.fasta.gz > $(REF_DIR)/\2.fasta; '\
 	'java -jar $(PIC) CreateSequenceDictionary '\
