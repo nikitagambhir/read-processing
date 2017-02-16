@@ -27,7 +27,7 @@
 all: index map vcf
 
 
-EMAIL    := ***REMOVED***
+EMAIL    := $$EMAIL # Set this environmental variable or change it here
 ROOT_DIR := $(shell echo $$WORK/Sclerotinia_mitochondria) 
 ROOT_DIR := $(strip $(ROOT_DIR))
 TMP      := \$$TMPDIR
