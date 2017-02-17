@@ -23,8 +23,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
-all: $(IDX) $(SAM) $(DUPMRK) $(GVCF) $(VCF)
+all: $(FASTA) $(RFILES) vcf 
 
 EMAIL    := $$EMAIL # Set this environmental variable or change it here
 ROOT_DIR := $(shell echo $$WORK/read-processing) 
