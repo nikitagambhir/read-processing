@@ -22,10 +22,9 @@
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.PHONY: all index help map clean burn manifest
 
-all: index map vcf
 
+all: $(IDX) $(SAM) $(DUPMRK) $(GVCF) $(VCF)
 
 EMAIL    := $$EMAIL # Set this environmental variable or change it here
 ROOT_DIR := $(shell echo $$WORK/read-processing) 
@@ -77,8 +76,10 @@ MANIFEST := $(foreach x,$(patsubst reads/%,%, $(READS)),$(call joiner,$(x)))
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
 	-mkdir $@
 index : $(FASTA) $(IDX) 
-map : $(IDX) $(SAM) $(SAM_VAL) $(BAM) $(FIXED) $(BAM_VAL) $(DUPMRK) $(DUP_VAL)
-vcf : $(REF_IDX) $(GVCF) $(VCF)
+map : index $(SAM) $(SAM_VAL) 
+bam : map $(BAM) $(FIXED) $(BAM_VAL) 
+dup : bam $(DUPMRK) $(DUP_VAL)
+vcf : dup $(REF_IDX) $(GVCF) $(VCF)
 
 
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
@@ -386,3 +387,7 @@ runclean.%:
 
 burn:
 	$(RM) -r $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(GVCF_DIR) runs $(REF_DIR) $(RUNFILES)
+
+
+
+.PHONY: all index help map bam dup vcf clean burn manifest
