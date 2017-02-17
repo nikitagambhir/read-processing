@@ -53,7 +53,7 @@ OUT_SAMPLES := $(patsubst %.in,%.out,$(SAMPLES))
 out : $(OUT_SAMPLES)
 
 runs/ARRAY-JOB-NAME/ARRAY-JOB-NAME.sh : $(SAMPLES)
-	echo $^ | sed 's/([^ ]+?).in */script-to-run.sh \1.in -o \1.out\n/' > $(RUNFILES)/run-script-to-run.txt
+	echo $^ | sed -r 's/([^ ]+?).in */script-to-run.sh \1.in -o \1.out\n/' > $(RUNFILES)/run-script-to-run.txt
 	SLURM_Array -c $(RUNFILES)/run-script-to-run.txt \
 	            --mail $(EMAIL) \
 				-r runs/ARRAY-JOB-NAME \
