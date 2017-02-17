@@ -25,8 +25,9 @@
 
 all: $(FASTA) $(RFILES) vcf 
 
+
 EMAIL    := $$EMAIL # Set this environmental variable or change it here
-ROOT_DIR := $(shell echo $$WORK/read-processing) 
+ROOT_DIR := $(shell echo $$WORK/$$(basename $$(pwd))) 
 ROOT_DIR := $(strip $(ROOT_DIR))
 TMP      := \$$TMPDIR
 IDX_DIR  := bt2-index
