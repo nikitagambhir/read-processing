@@ -320,8 +320,19 @@ runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 
 $(GVCF): $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
 
+
+# 
+# Note for this step, memory matters more than the number of cores.
+#
+# For example, here I'm using 50g of memory by setting the -Xmx
+# and the -m flag in the SLURM_Array command. Notice that for the
+# Xmx flag, the number of corse must butt up against the flag. This
+# is a Java thing.
+#
+# I also set the number of threads with -nt and -P flags, respectively
+#
 runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
-	printf "java -Xmx36g -Djava.io.tmpdir=$(TMP) "\
+	printf "java -Xmx50g -Djava.io.tmpdir=$(TMP) "\
 	"-jar $(gatk) "\
 	"-nt 6 "\
 	"-T GenotypeGVCFs "\
@@ -334,7 +345,7 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 		-r runs/MAKE-VCF \
 		-l $(GATK) \
 		--hold \
-		-m 36g \
+		-m 50g \
 		-t 24:00:00 \
 		-P 6 \
 		-w $(ROOT_DIR)
