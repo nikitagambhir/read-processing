@@ -6,4 +6,4 @@ SAMS/*
 BAMS/*
 REF/*
 GVCF/*
-
+.slurm_array_jobnums

@@ -82,6 +82,7 @@ map : index $(SAM) $(SAM_VAL)
 bam : map $(BAM) $(FIXED) $(BAM_VAL) 
 dup : bam $(DUPMRK) $(DUP_VAL)
 vcf : dup $(REF_IDX) $(GVCF) $(VCF)
+concat : runs/CONCAT-VCF/CONCAT-VCF.sh
 
 # Unzips the reference genome
 $(REF_DIR)/%.fasta : $(FAST_DIR)/%.fasta.gz | $(REF_DIR) $(RUNFILES)
@@ -357,6 +358,14 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 		-P 6 \
 		-w $(ROOT_DIR)
 
+runs/CONCAT-VCF/CONCAT-VCF.sh: 
+	echo 'vcf-concat $(shell ls $(GVCF_DIR)/res.*.vcf.gz | sort -t'.' -n -k2)'\
+	' | gzip -c > $(GVCF_DIR)/res.vcf.gz' > \
+	$(RUNFILES)/merge-vcf.txt
+	SLURM_Array -c $(RUNFILES)/merge-vcf.txt \
+		-r runs/CONCAT-VCF \
+		-l vcftools/0.1 \
+		-w $(ROOT_DIR)
 
 $(VCF): $(GVCF) runs/MAKE-VCF/MAKE-VCF.sh
 
