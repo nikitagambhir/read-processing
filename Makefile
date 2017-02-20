@@ -345,7 +345,7 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 	"-T GenotypeGVCFs "\
 	"-R $(ROOT_DIR)/$(REF_FNA) "\
 	"$(addprefix -V , $^) "\
-	"-o $(GVCF_DIR)/res.vcf.gz --intervals" | \
+	"-o $(GVCF_DIR)/res.\$$SLURM_ARRAY_TASK_ID.vcf.gz --intervals" | \
 	./scripts/prepend-to-file.sh $(INTERVALS) $(RUNFILES)/make-vcf.txt
 	SLURM_Array -c $(RUNFILES)/make-vcf.txt \
 		--mail $(EMAIL) \
