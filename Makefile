@@ -77,11 +77,11 @@ MANIFEST := $(foreach x,$(patsubst reads/%,%, $(READS)),$(call joiner,$(x)))
 
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
 	-mkdir $@
-index : $(FASTA) $(REF_FNA) $(IDX) 
+index : $(FASTA) $(REF_FNA) $(INTERVALS) $(IDX) 
 map : index $(SAM) $(SAM_VAL) 
 bam : map $(BAM) $(FIXED) $(BAM_VAL) 
 dup : bam $(DUPMRK) $(DUP_VAL)
-vcf : dup $(REF_IDX) $(INTERVALS) $(GVCF) $(VCF)
+vcf : dup $(REF_IDX) $(GVCF) $(VCF)
 
 # Unzips the reference genome
 $(REF_DIR)/%.fasta : $(FAST_DIR)/%.fasta.gz | $(REF_DIR) $(RUNFILES)
@@ -89,15 +89,9 @@ $(REF_DIR)/%.fasta : $(FAST_DIR)/%.fasta.gz | $(REF_DIR) $(RUNFILES)
 	
 # Creates intervals for the final step. Edit the -w parameter to change.
 $(REF_DIR)/%.intervals.txt : $(REF_DIR)/%.fasta
-	echo './scripts/make-GATK-intervals.py '\
-	'-f $< '\
-	'-w 50000 '\
-	'-o $@' | \
-	SLURM_Array -r runs/GATK-INTERVALS \
-		-l python/3.5 \
-		-w $(ROOT_DIR)
+	./scripts/make-GATK-intervals.py -f $< -w 10000 -o $@
 
-runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
+runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(REF_FNA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
 	SLURM_Array -c $(RUNFILES)/make-index.txt \
 		-r runs/BOWTIE2-BUILD \
@@ -352,7 +346,7 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 	"-R $(ROOT_DIR)/$(REF_IDX) "\
 	"$(addprefix -V , $^) "\
 	"-o $(GVCF_DIR)/res.vcf.gz --intervals" | \
-	./scripts/prepend-to-file.py $(INTERVALS) $(RUNFILES)/make-vcf.txt
+	./scripts/prepend-to-file.sh $(INTERVALS) $(RUNFILES)/make-vcf.txt
 	SLURM_Array -c $(RUNFILES)/make-vcf.txt \
 		--mail $(EMAIL) \
 		-r runs/MAKE-VCF \
