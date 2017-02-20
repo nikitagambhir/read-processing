@@ -175,10 +175,9 @@ runs/FIXMATE/FIXMATE.sh: $(BAM) | $(BAM_DIR)
 	sed -r 's@'\
 	'([^ ]+?)_nsort *'\
 	'@'\
-	'zcat $(FASTA) > $(TMP)/r.fa; '\
 	'samtools fixmate -O bam \1_nsort /dev/stdout | '\
 	'samtools sort -O bam -o - -T \1_csort_tmp | '\
-	'samtools calmd -b - $(TMP)/r.fa > \1_fixed.bam\n'\
+	'samtools calmd -b - $(REF_FNA) > \1_fixed.bam\n'\
 	'@g' > $(RUNFILES)/fixmate.txt # end
 	SLURM_Array -c $(RUNFILES)/fixmate.txt \
 		--mail $(EMAIL) \
