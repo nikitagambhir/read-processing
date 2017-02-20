@@ -343,7 +343,7 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 	"-jar $(gatk) "\
 	"-nt 6 "\
 	"-T GenotypeGVCFs "\
-	"-R $(ROOT_DIR)/$(REF_IDX) "\
+	"-R $(ROOT_DIR)/$(REF_FNA) "\
 	"$(addprefix -V , $^) "\
 	"-o $(GVCF_DIR)/res.vcf.gz --intervals" | \
 	./scripts/prepend-to-file.sh $(INTERVALS) $(RUNFILES)/make-vcf.txt
