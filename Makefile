@@ -44,7 +44,9 @@ REF_DIR  := REF
 RUNFILES := runfiles
 FAST_DIR := mitochondria_genome
 FASTA    := $(FAST_DIR)/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz
-REF_IDX  := $(patsubst $(FAST_DIR)/%.fasta.gz,$(REF_DIR)/%.fasta, $(FASTA))
+REF_FNA  := $(patsubst $(FAST_DIR)/%.fasta.gz,$(REF_DIR)/%.fasta, $(FASTA))
+REF_IDX  := $(patsubst %.fasta,%.dict, $(REF_FNA))
+INTERVALS:= $(patsubst %.fasta,%.intervals.txt, $(REF_FNA))
 PREFIX   := Ssc_mito # prefix for the bowtie2 index
 READS    := $(shell ls -d reads/*_1.fq.gz | sed 's/_1.fq.gz//g')
 RFILES   := $(addsuffix _1.fq.gz, $(READS))
@@ -75,12 +77,25 @@ MANIFEST := $(foreach x,$(patsubst reads/%,%, $(READS)),$(call joiner,$(x)))
 
 $(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
 	-mkdir $@
-index : $(FASTA) $(IDX) 
+index : $(FASTA) $(REF_FNA) $(IDX) 
 map : index $(SAM) $(SAM_VAL) 
 bam : map $(BAM) $(FIXED) $(BAM_VAL) 
 dup : bam $(DUPMRK) $(DUP_VAL)
-vcf : dup $(REF_IDX) $(GVCF) $(VCF)
+vcf : dup $(REF_IDX) $(INTERVALS) $(GVCF) $(VCF)
 
+# Unzips the reference genome
+$(REF_DIR)/%.fasta : $(FAST_DIR)/%.fasta.gz | $(REF_DIR) $(RUNFILES)
+	zcat $^ | sed -r 's/[ ,]+/_/g' > $@
+	
+# Creates intervals for the final step. Edit the -w parameter to change.
+$(REF_DIR)/%.intervals.txt : $(REF_DIR)/%.fasta
+	echo './scripts/make-GATK-intervals.py '\
+	'-f $< '\
+	'-w 50000 '\
+	'-o $@' | \
+	SLURM_Array -r runs/GATK-INTERVALS \
+		-l python/3.5 \
+		-w $(ROOT_DIR)
 
 runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(FASTA) | $(IDX_DIR) $(RUNFILES)
 	$^ $(addprefix $(IDX_DIR)/, $(PREFIX)) 
@@ -268,16 +283,15 @@ $(DUP_VAL): $(DUPMRK) runs/VALIDATE-DUPS/VALIDATE-DUPS.sh
 #    -o gvcf/${arr[0]}_3n.g.vcf.gz"
 #
 
-runs/MAKE-GATK-REF/MAKE-GATK-REF.sh: $(FASTA) | $(REF_DIR)
+runs/MAKE-GATK-REF/MAKE-GATK-REF.sh: $(REF_FNA) 
 	echo $^ | \
 	sed -r 's@'\
-	'($(FAST_DIR))/(.+?).fasta.gz'\
+	'^(.+?).fasta'\
 	'@'\
-	'zcat \1/\2.fasta.gz > $(REF_DIR)/\2.fasta; '\
 	'java -jar $(PIC) CreateSequenceDictionary '\
-	'R=$(REF_DIR)/\2.fasta '\
-	'O=$(REF_DIR)/\2.dict; '\
-	'samtools faidx $(REF_DIR)/\2.fasta'\
+	'R=\1.fasta '\
+	'O=\1.dict; '\
+	'samtools faidx \1.fasta'\
 	'@g' > $(RUNFILES)/make-gatk-ref.txt # end
 	SLURM_Array -c $(RUNFILES)/make-gatk-ref.txt \
 		--mail $(EMAIL) \
@@ -304,7 +318,7 @@ runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 	'@'\
 	'java -Djava.io.tmpdir=$(TMP) -jar $(gatk) '\
 	'-T HaplotypeCaller '\
-	'-R $(ROOT_DIR)/$(REF_IDX) '\
+	'-R $(ROOT_DIR)/$(REF_FNA) '\
 	'--emitRefConfidence GVCF '\
 	'-ploidy 1 '\
 	'-I $(BAM_DIR)/\1_dupmrk.bam '\
@@ -318,7 +332,7 @@ runs/MAKE-GVCF/MAKE-GVCF.sh: $(DUPMRK) | $(GVCF_DIR)
 		-m 25g \
 		-w $(ROOT_DIR)
 
-$(GVCF): $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
+$(GVCF) : $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
 
 
 # 
