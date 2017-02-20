@@ -351,8 +351,8 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 	"-T GenotypeGVCFs "\
 	"-R $(ROOT_DIR)/$(REF_IDX) "\
 	"$(addprefix -V , $^) "\
-	"-o $(GVCF_DIR)/res.vcf.gz" \
-	> $(RUNFILES)/make-vcf.txt
+	"-o $(GVCF_DIR)/res.vcf.gz --intervals" | \
+	./scripts/prepend-to-file.py $(INTERVALS) $(RUNFILES)/make-vcf.txt
 	SLURM_Array -c $(RUNFILES)/make-vcf.txt \
 		--mail $(EMAIL) \
 		-r runs/MAKE-VCF \
