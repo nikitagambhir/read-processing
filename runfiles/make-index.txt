@@ -1,1 +1,1 @@
-zcat mitochondria_genome/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta.gz > $TMPDIR/tmp.fa; bowtie2-build --seed 99 $TMPDIR/tmp.fa bt2-index/Ssc_mito
+bowtie2-build --seed 99 REF/sclerotinia_sclerotiorum_mitochondria_2_supercontigs.fasta bt2-index/Ssc_mito

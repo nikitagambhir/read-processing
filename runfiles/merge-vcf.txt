@@ -1,0 +1,1 @@
+vcf-concat GVCF/res.1.vcf.gz GVCF/res.2.vcf.gz GVCF/res.3.vcf.gz GVCF/res.4.vcf.gz GVCF/res.5.vcf.gz GVCF/res.6.vcf.gz GVCF/res.7.vcf.gz GVCF/res.8.vcf.gz GVCF/res.9.vcf.gz GVCF/res.10.vcf.gz GVCF/res.11.vcf.gz GVCF/res.12.vcf.gz GVCF/res.13.vcf.gz | gzip -c > GVCF/res.vcf.gz
