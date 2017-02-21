@@ -340,7 +340,7 @@ $(GVCF) : $(DUPMRK) runs/MAKE-GVCF/MAKE-GVCF.sh
 # I also set the number of threads with -nt and -P flags, respectively
 #
 runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
-	printf "java -Xmx50g -Djava.io.tmpdir=$(TMP) "\
+	printf "java -Xmx100g -Djava.io.tmpdir=$(TMP) "\
 	"-jar $(gatk) "\
 	"-nt 6 "\
 	"-T GenotypeGVCFs "\
@@ -353,7 +353,7 @@ runs/MAKE-VCF/MAKE-VCF.sh: $(GVCF)
 		-r runs/MAKE-VCF \
 		-l $(GATK) \
 		--hold \
-		-m 50g \
+		-m 100g \
 		-t 24:00:00 \
 		-P 6 \
 		-w $(ROOT_DIR)
@@ -374,12 +374,18 @@ help :
 	@echo "COMMANDS"
 	@echo "============"
 	@echo
-	@echo "all"
-	@echo "index" 
-	@echo "help" 
-	@echo "burn"
-	@echo "manifest"
-	@echo "runclean.JOB_NAME"
+	@echo "all	almost all -- Make res.n.vcf.gz files"
+	@echo "concat	concatenate res.n.vcf.gz files (to run after all)"
+	@echo "index	generate the bowtie2 index"
+	@echo "map	map reads and validate the SAM files"
+	@echo "bam	convert sam to bam and filter"
+	@echo "dup	deduplicate bam files and validate"
+	@echo "vcf	create g.vcf and vcf files (this is the longest step)" 
+	@echo
+	@echo "help	show this message" 
+	@echo "burn	REMOVE ALL GENERATED FILES"
+	@echo "manifest	create a manifest of all generated files per read"
+	@echo "runclean.JOB_NAME	clean runfiles"
 	@echo
 	@echo "PARAMETERS"
 	@echo "============"
