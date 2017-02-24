@@ -37,6 +37,7 @@ PICARD   := picard/1.1
 GATK     := gatk/3.4
 gatk     := \$$GATK
 PIC      := \$$PICARD
+TRIM_DIR := TRIM
 SAM_DIR  := SAMS
 BAM_DIR  := BAMS
 GVCF_DIR := GVCF
@@ -75,7 +76,7 @@ joiner = reads/$(1)_1.fq.gz,\
 MANIFEST := $(foreach x,$(patsubst reads/%,%, $(READS)),$(call joiner,$(x)))
 
 
-$(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR):
+$(RUNFILES) $(IDX_DIR) $(SAM_DIR) $(BAM_DIR) $(REF_DIR) $(GVCF_DIR) $(TRIM_DIR):
 	-mkdir $@
 index : $(FASTA) $(REF_FNA) $(INTERVALS) $(IDX) 
 map : index $(SAM) $(SAM_VAL) 
@@ -100,6 +101,21 @@ runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh : scripts/make-index.sh $(REF_FNA) | $(IDX_D
 		-w $(ROOT_DIR)
 
 $(IDX) : scripts/make-index.sh $(FASTA) runs/BOWTIE2-BUILD/BOWTIE2-BUILD.sh
+
+runs/TRIM-READS/TRIM-READS.sh: $(RFILES) | $(TRIM_DIR)
+	echo $(READS) | \
+	sed -r 's@'\
+	'reads/([^ ]+?) *'\
+	'@'\
+	'trimmomatic PE -phred33 reads/\1_1.fq.gz reads/\1_2.fq.gz '\
+	'-baseout $(TRIM_DIR)/\1.fq.gz '\
+	'ILLUMINACLIP:/util/opt/anaconda/2.0/envs/trimmomatic-0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:30:10 LEADING:20 TRAILING:20 SLIDINGWINDOW:4:20 MINLEN:36\n'\
+	'@g' > $(RUNFILES)/trimmomatic-run.txt #end
+	SLURM_Array -c $(RUNFILES)/trimmomatic-run.txt \
+		-r runs/TRIM-READS \
+		-l trimmomatic/0.36 \
+		--hold \
+		-w $(ROOT_DIR)
 
 runs/MAP-READS/MAP-READS.sh: scripts/make-alignment.sh $(RFILES) | $(SAM_DIR) 
 	$< $(addprefix $(IDX_DIR)/, $(PREFIX)) $(SAM_DIR) $(READS)
